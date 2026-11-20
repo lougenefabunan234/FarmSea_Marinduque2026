@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FarmSea M'duwue - Marinduque Marketplace</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <style>
+      :root {
+        --green: #176b48;
+        --green-dark: #105338;
+        --cream: #f7f8f2;
+      }
+
+      body {
+        background: var(--cream);
+        color: #23332b;
+      }
+
+      .navbar,
+      .hero {
+        background: var(--green);
+      }
+
+      .navbar-brand,
+      .navbar-text {
+        color: white !important;
+      }
+
+      .hero {
+        color: white;
+        padding: 2rem 0;
+      }
+
+      .card {
+        border: 0;
+        box-shadow: 0 3px 14px rgba(20, 50, 35, 0.08);
+        border-radius: 12px;
+      }
+
+      .btn-success {
+        background: var(--green);
+        border-color: var(--green);
+      }
+
+      .btn-success:hover {
+        background: var(--green-dark);
+        border-color: var(--green-dark);
+      }
+
+      .price {
+        color: var(--green);
+        font-size: 1.2rem;
+        font-weight: 800;
+      }
+
+      .product-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 20px;
+      }
+
+      .product-card {
+        overflow: hidden;
+        height: 100%;
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+
+      .product-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 22px rgba(20, 50, 35, 0.15);
+      }
+
+      .product-image {
+        width: 100%;
+        height: 190px;
+        object-fit: cover;
+        background: #e8eee8;
+      }
+
+      .product-card .card-body {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .product-card .buy-button {
+        margin-top: auto;
+      }
+
+      .product-description {
+        white-space: pre-wrap;
+      }
+
+      .stock-label {
+        color: #64746a;
+        font-size: 0.85rem;
+      }
+
+      .location-label {
+        font-size: 0.85rem;
+        color: #53665b;
+      }
+
+      .seller-label {
+        font-size: 0.85rem;
+        color: #53665b;
+      }
+
+      .empty-state {
+        padding: 35px;
+        text-align: center;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 3px 14px rgba(20, 50, 35, 0.08);
+      }
+
+      .section-heading {
+        font-weight: 700;
+      }
+
+      footer {
+        color: #66756c;
+      }
+
+      @media (max-width: 992px) {
+        .product-grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 768px) {
+        .product-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 12px;
+        }
+
+        .product-image {
+          height: 155px;
+        }
+      }
+
+      @media (max-width: 400px) {
+        .product-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="app"></div>
+
+    <script>
+      "use strict";
+
+      const STORAGE_KEY = "marinduque-marketplace-v1";
+      const app = document.getElementById("app");
+
+      const sampleProducts = [
+        {
+          id: "sample-boac-mango",
+          sellerId: null,
+          sellerName: "Boac Local Farm",
+          sellerPhone: "Demo seller",
+          name: "Fresh Marinduque Mangoes",
+          category: "Fruits & vegetables",
+          description:
+            "Fresh mangoes - Perfect for eating and making mango desserts.",
+          price: 120,
+          unit: "kg",
+          quantity: 100,
+          municipality: "Boac",
+          barangay: "Mercado",
+          location: "Boac, Mercado",
+          image:
+            "https://images.unsplash.com/photo-1553279768-865429fa0078?w=600",
+        },
+        {
+          id: "sample-mogpog-banana",
+          sellerId: null,
+          sellerName: "Mogpog Agricultural Farm",
+          sellerPhone: "Demo seller",
+          name: "Native Bananas",
+          category: "Fruits & vegetables",
+          description: "Fresh native bananas from local growers.",
+          price: 65,
+          unit: "kg",
+          quantity: 80,
+          municipality: "Mogpog",
+          barangay: "Marketsite",
+          location: "Mogpog, Marketsite",
+          image:
+            "https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=600",
+        },
+        {
+          id: "sample-gasan-squid",
+          sellerId: null,
+          sellerName: "Gasan Fresh Seafood",
+          sellerPhone: "Demo seller",
+          name: "Fresh Squid",
+          category: "Seafood",
+          description: "Fresh squid from local fishing.",
+          price: 250,
+          unit: "kg",
+          quantity: 40,
+          municipality: "Gasan",
+          barangay: "Dili",
+          location: "Gasan, Dili",
+          image:
+            "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=600",
+        },
+        {
+          id: "sample-buenavista-coconut",
+          sellerId: null,
+          sellerName: "Buenavista Coconut Farm",
+          sellerPhone: "Demo seller",
+          name: "Fresh Coconut",
+          category: "Other",
+          description: "Fresh coconuts from local agricultural producers.",
+          price: 35,
+          unit: "piece",
+          quantity: 150,
+          municipality: "Buenavista",
+          barangay: "Malbog",
+          location: "Buenavista, Malbog",
+          image:
+            "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=600",
+        },
+        {
+          id: "sample-torrijos-tilapia",
+          sellerId: null,
+          sellerName: "Torrijos Fish Supplier",
+          sellerPhone: "Demo seller",
+          name: "Fresh Tilapia",
+          category: "Seafood",
+          description: "Fresh tilapia suitable for everyday meals.",
+          price: 180,
+          unit: "kg",
+          quantity: 60,
+          municipality: "Torrijos",
+          barangay: "Poblacion",
+          location: "Torrijos, Poblacion",
+          image:
+            "https://images.unsplash.com/photo-1510130387422-82bed34b37e9?w=600",
+        },
+        {
+          id: "sample-santacruz-rice",
+          sellerId: null,
+          sellerName: "Santa Cruz Rice Producer",
+          sellerPhone: "Demo seller",
+          name: "Local Rice",
+          category: "Rice & grains",
+          description:
+            "Locally sourced rice from Marinduque agricultural producers.",
+          price: 55,
+          unit: "kg",
+          quantity: 100,
+          municipality: "Santa Cruz",
+          barangay: "Poblacion",
+          location: "Santa Cruz, Poblacion",
+          image:
+            "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=600",
+        },
+      ];
+
+      function loadData() {
+        try {
+          const saved = localStorage.getItem(STORAGE_KEY);
+
+          let storedData = saved ? JSON.parse(saved) : {};
+
+          if (
+            !storedData ||
+            typeof storedData !== "object" ||
+            Array.isArray(storedData)
+          ) {
+            storedData = {};
+          }
+
+          const result = {
+            ...storedData,
+            users: Array.isArray(storedData.users) ? storedData.users : [],
+            products: Array.isArray(storedData.products)
+              ? storedData.products
+              : [],
+            orders: Array.isArray(storedData.orders) ? storedData.orders : [],
+            currentUserId: storedData.currentUserId ?? null,
+          };
+
+          if (result.products.length === 0) {
+            result.products = sampleProducts.map((product) => ({ ...product }));
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(result));
+          }
+
+          return result;
+        } catch (error) {
+          console.error("Could not read marketplace data:", error);
+
+          app.innerHTML = `
+      <main class="container py-5">
+        <div class="alert alert-danger">
+          Marketplace data could not be loaded. Please check your browser storage.
+        </div>
+      </main>`;
+
+          throw error;
+        }
+      }
+
+      let data = loadData();
+
+      function saveData() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        } catch (error) {
+          console.error("Could not save data:", error);
+          alert("Your changes could not be saved. Check browser storage.");
+          throw error;
+        }
+      }
+
+      function escapeHtml(value) {
+        return String(value ?? "").replace(
+          /[&<>"']/g,
+          (character) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            }[character])
+        );
+      }
+
+      function makeId() {
+        return window.crypto?.randomUUID
+          ? window.crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      }
+
+      function currentUser() {
+        return (
+          data.users.find((user) => user.id === data.currentUserId) || null
+        );
+      }
+
+      function formatPrice(price) {
+        return Number(price).toLocaleString("en-PH", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+      }
+
+      function showAuth(mode = "login", message = "") {
+        const isRegister = mode === "register";
+
+        app.innerHTML = `
+    <header class="hero">
+      <div class="container">
+        <h1 class="h2 mb-1">FarmSea M'duque</h1>
+        <p class="mb-0">A local marketplace for farmers and fisherfolk in Marinduque</p>
+      </div>
+    </header>
+
+    <main class="container py-4" style="max-width:520px">
+      ${
+        message
+          ? `<div class="alert alert-info">${escapeHtml(message)}</div>`
+          : ""
+      }
+
+      <div class="card">
+        <div class="card-body p-4">
+          <h2 class="h4 mb-3">${
+            isRegister ? "Create an account" : "Hello, Welcome"
+          }</h2>
+
+          <form id="auth-form">
+            ${
+              isRegister
+                ? `
+              <div class="mb-3">
+                <label class="form-label" for="name">Name</label>
+                <input class="form-control" id="name" name="name" required maxlength="80">
+              </div>
+            `
+                : ""
+            }
+
+            <div class="mb-3">
+              <label class="form-label" for="email">Email</label>
+              <input class="form-control" id="email" name="email" type="email" required>
+            </div>
+
+            ${
+              isRegister
+                ? `
+              <div class="mb-3">
+                <label class="form-label" for="phone">Phone number</label>
+                <input class="form-control" id="phone" name="phone" required maxlength="30">
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label" for="role">I want to</label>
+                <select class="form-select" id="role" name="role" required>
+                  <option value="buyer">Buy products</option>
+                  <option value="seller">Sell products</option>
+                </select>
+              </div>
+            `
+                : ""
+            }
+
+            <div class="mb-3">
+              <label class="form-label" for="password">Password</label>
+              <input class="form-control" id="password" name="password"
+                type="password" required minlength="${isRegister ? "6" : "1"}">
+            </div>
+
+            <button class="btn btn-success w-100" type="submit">
+              ${isRegister ? "Register" : "Log in"}
+            </button>
+          </form>
+
+          <p class="text-center mt-3 mb-0">
+            ${isRegister ? "Already registered?" : "New to the marketplace?"}
+            <button class="btn btn-link p-0" id="switch-auth" type="button">
+              ${isRegister ? "Log in" : "Create an account"}
+            </button>
+          </p>
+        </div>
+      </div>
+    </main>
+  `;
+
+        document.getElementById("switch-auth").addEventListener("click", () => {
+          showAuth(isRegister ? "login" : "register");
+        });
+
+        document
+          .getElementById("auth-form")
+          .addEventListener("submit", (event) => {
+            event.preventDefault();
+
+            const form = new FormData(event.currentTarget);
+            const email = String(form.get("email")).trim().toLowerCase();
+            const password = String(form.get("password"));
+
+            if (isRegister) {
+              if (data.users.some((user) => user.email === email)) {
+                showAuth(
+                  "register",
+                  "An account with that email already exists."
+                );
+                return;
+              }
+
+              const user = {
+                id: makeId(),
+                name: String(form.get("name")).trim(),
+                email,
+                phone: String(form.get("phone")).trim(),
+                role: String(form.get("role")),
+                password,
+              };
+
+              data.users.push(user);
+              data.currentUserId = user.id;
+              saveData();
+              renderApp();
+              return;
+            }
+
+            const user = data.users.find(
+              (item) => item.email === email && item.password === password
+            );
+
+            if (!user) {
+              showAuth("login", "Email or password is incorrect.");
+              return;
+            }
+
+            data.currentUserId = user.id;
+            saveData();
+            renderApp();
+          });
+      }
+
+      function renderApp() {
+        const user = currentUser();
+
+        if (!user) {
+          showAuth();
+          return;
+        }
+
+        app.innerHTML = `
+    <nav class="navbar navbar-expand">
+      <div class="container">
+        <a class="navbar-brand fw-semibold" href="#" id="home-link">
+          Harvest &amp; Catch
+        </a>
+
+        <div class="ms-auto d-flex align-items-center gap-2">
+          <span class="navbar-text d-none d-sm-inline">
+            ${escapeHtml(user.name)} · ${
+          user.role === "seller" ? "Seller" : "Buyer"
+        }
+          </span>
+          <button class="btn btn-outline-light btn-sm" id="logout" type="button">
+            Log out
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <header class="hero">
+      <div class="container">
+        <h1 class="h3 mb-1">
+          ${user.role === "seller" ? "Your seller dashboard" : "Marketplace"}
+        </h1>
+        <p class="mb-0">
+          ${
+            user.role === "seller"
+              ? "List your local produce and seafood for the community."
+              : "Discover fresh products from Marinduque sellers."
+          }
+        </p>
+      </div>
+    </header>
+
+    <main class="container py-4" id="main-content"></main>
+
+    <footer class="container text-center py-4 small">
+      FarmSea M'duque · Connect with local sellers
+    </footer>
+  `;
+
+        document
+          .getElementById("home-link")
+          .addEventListener("click", (event) => {
+            event.preventDefault();
+            renderApp();
+          });
+
+        document.getElementById("logout").addEventListener("click", () => {
+          data.currentUserId = null;
+          saveData();
+          showAuth();
+        });
+
+        if (user.role === "seller") {
+          renderSeller(user);
+        } else {
+          renderMarketplace();
+        }
+      }
+
+      function renderSeller(user) {
+        const main = document.getElementById("main-content");
+
+        const ownProducts = data.products.filter(
+          (product) => product.sellerId === user.id
+        );
+
+        main.innerHTML = `
+    <div class="row g-4">
+      <section class="col-lg-5">
+        <div class="card">
+          <div class="card-body p-4">
+            <h2 class="h5 mb-3">Add a product</h2>
+
+            <form id="product-form">
+              <div class="mb-3">
+                <label class="form-label" for="product-name">Product name</label>
+                <input class="form-control" id="product-name" name="name"
+                  required maxlength="100" placeholder="e.g. Fresh mangoes">
+              </div>
+
+              <div class="row">
+                <div class="mb-3 col-sm-6">
+                  <label class="form-label" for="category">Category</label>
+                  <select class="form-select" id="category" name="category" required>
+                    <option value="Fruits & vegetables">Fruits &amp; vegetables</option>
+                    <option value="Seafood">Seafood</option>
+                    <option value="Rice & grains">Rice &amp; grains</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                <div class="mb-3 col-sm-6">
+                  <label class="form-label" for="unit">Sold by</label>
+                  <input class="form-control" id="unit" name="unit"
+                    required maxlength="30" placeholder="kg, basket, piece">
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="mb-3 col-sm-6">
+                  <label class="form-label" for="price">Price (₱)</label>
+                  <input class="form-control" id="price" name="price"
+                    type="number" min="0.01" step="0.01" required>
+                </div>
+
+                <div class="mb-3 col-sm-6">
+                  <label class="form-label" for="quantity">Available quantity</label>
+                  <input class="form-control" id="quantity" name="quantity"
+                    type="number" min="1" step="1" required>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label" for="location">Municipality</label>
+                <select class="form-select" id="location" name="location" required>
+                  <option value="">Select municipality</option>
+                  <option>Boac</option>
+                  <option>Mogpog</option>
+                  <option>Gasan</option>
+                  <option>Buenavista</option>
+                  <option>Torrijos</option>
+                  <option>Santa Cruz</option>
+                </select>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label" for="barangay">Barangay</label>
+                <input class="form-control" id="barangay" name="barangay"
+                  required maxlength="100" placeholder="Enter barangay">
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label" for="image">Product image URL (optional)</label>
+                <input class="form-control" id="image" name="image"
+                  type="url" placeholder="https://example.com/image.jpg">
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label" for="description">Description</label>
+                <textarea class="form-control" id="description" name="description"
+                  rows="3" maxlength="500"></textarea>
+              </div>
+
+              <button class="btn btn-success w-100" type="submit">
+                Publish listing
+              </button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <section class="col-lg-7">
+        <h2 class="h5 mb-3">
+          Your listings (${ownProducts.length})
+        </h2>
+
+        <div class="product-grid" style="grid-template-columns:repeat(auto-fit,minmax(210px,1fr))">
+          ${
+            ownProducts.length
+              ? ownProducts
+                  .map((product) => productCard(product, false))
+                  .join("")
+              : `<div class="empty-state">You have no listings yet. Add a product to get started.</div>`
+          }
+        </div>
+      </section>
+    </div>
+  `;
+
+        document
+          .getElementById("product-form")
+          .addEventListener("submit", (event) => {
+            event.preventDefault();
+
+            const form = new FormData(event.currentTarget);
+            const municipality = String(form.get("location")).trim();
+            const barangay = String(form.get("barangay")).trim();
+
+            data.products.unshift({
+              id: makeId(),
+              sellerId: user.id,
+              sellerName: user.name,
+              sellerPhone: user.phone,
+              name: String(form.get("name")).trim(),
+              category: String(form.get("category")),
+              unit: String(form.get("unit")).trim(),
+              price: Number(form.get("price")),
+              quantity: Number(form.get("quantity")),
+              municipality,
+              barangay,
+              location: `${municipality}, ${barangay}`,
+              image:
+                String(form.get("image") || "").trim() ||
+                defaultImage(form.get("category")),
+              description: String(form.get("description")).trim(),
+            });
+
+            saveData();
+            renderSeller(user);
+          });
+
+        main.querySelectorAll("[data-delete-product]").forEach((button) => {
+          button.addEventListener("click", () => {
+            if (!confirm("Are you sure you want to remove this listing?"))
+              return;
+
+            data.products = data.products.filter(
+              (product) =>
+                product.id !== button.dataset.deleteProduct ||
+                product.sellerId !== user.id
+            );
+
+            saveData();
+            renderSeller(user);
+          });
+        });
+      }
+
+      function defaultImage(category) {
+        if (category === "Seafood") {
+          return "https://images.unsplash.com/photo-1510130387422-82bed34b37e9?w=600";
+        }
+
+        if (category === "Rice & grains") {
+          return "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=600";
+        }
+
+        return "https://images.unsplash.com/photo-1553279768-865429fa0078?w=600";
+      }
+
+      function productCard(product, showSeller = false) {
+        const image = product.image || defaultImage(product.category);
+        const sellerName = product.sellerName || "Local Marinduque Seller";
+        const municipality =
+          product.municipality || product.location || "Marinduque";
+        const barangay = product.barangay || "";
+
+        return `
+    <article class="card product-card">
+      <img
+        class="product-image"
+        src="${escapeHtml(image)}"
+        alt="${escapeHtml(product.name)}"
+        loading="lazy"
+        onerror="this.onerror=null;this.src='${defaultImage(product.category)}'"
+      >
+
+      <div class="card-body">
+        <span class="badge text-bg-light align-self-start mb-2">
+          ${escapeHtml(product.category)}
+        </span>
+
+        <h3 class="h6 fw-bold mb-2">${escapeHtml(product.name)}</h3>
+
+        <div class="price mb-2">
+          ₱${formatPrice(product.price)}
+          <span class="small fw-normal">/ ${escapeHtml(product.unit)}</span>
+        </div>
+
+        <p class="location-label mb-2">
+          <strong>Location:</strong>
+          ${escapeHtml(municipality)}${
+          barangay ? ", " + escapeHtml(barangay) : ""
+        }
+        </p>
+
+        <p class="stock-label mb-2">
+          <strong>Available stock:</strong>
+          ${escapeHtml(product.quantity)} ${escapeHtml(product.unit)}
+        </p>
+
+        <p class="seller-label mb-2">
+          <strong>Seller:</strong> ${escapeHtml(sellerName)}
+        </p>
+
+        ${
+          showSeller && product.sellerPhone
+            ? `<p class="seller-label mb-2"><strong>Contact:</strong> ${escapeHtml(
+                product.sellerPhone
+              )}</p>`
+            : ""
+        }
+
+        ${
+          product.description
+            ? `<p class="small product-description mb-3">${escapeHtml(
+                product.description
+              )}</p>`
+            : ""
+        }
+
+        ${
+          showSeller
+            ? `<button class="btn btn-success w-100 buy-button"
+                type="button" data-reserve="${escapeHtml(product.id)}"
+                ${Number(product.quantity) <= 0 ? "disabled" : ""}>
+                ${
+                  Number(product.quantity) <= 0
+                    ? "Out of stock"
+                    : "Buy / Reserve"
+                }
+             </button>`
+            : `<button class="btn btn-outline-danger btn-sm mt-auto"
+                type="button" data-delete-product="${escapeHtml(product.id)}">
+                Remove listing
+             </button>`
+        }
+      </div>
+    </article>
+  `;
+      }
+
+      function renderMarketplace(search = "", category = "") {
+        const main = document.getElementById("main-content");
+        const normalizedSearch = search.trim().toLowerCase();
+
+        const products = data.products.filter((product) => {
+          const searchValues = [
+            product.name,
+            product.location,
+            product.municipality,
+            product.barangay,
+            product.description,
+            product.sellerName,
+            product.category,
+          ];
+
+          const matchesSearch =
+            !normalizedSearch ||
+            searchValues.some((value) =>
+              String(value ?? "")
+                .toLowerCase()
+                .includes(normalizedSearch)
+            );
+
+          const matchesCategory = !category || product.category === category;
+
+          return matchesSearch && matchesCategory;
+        });
+
+        const categories = [
+          "Fruits & vegetables",
+          "Seafood",
+          "Rice & grains",
+          "Other",
+        ];
+
+        const user = currentUser();
+
+        const myOrders = data.orders.filter(
+          (order) => order.buyerId === user.id
+        );
+
+        main.innerHTML = `
+    <section class="card mb-4">
+      <div class="card-body p-4">
+        <h2 class="h5 mb-3">Find local products</h2>
+
+        <form id="search-form">
+          <div class="row g-3 align-items-end">
+            <div class="col-md-7">
+              <label class="form-label" for="search">Search products or location</label>
+              <input class="form-control" id="search" name="search"
+                value="${escapeHtml(search)}"
+                placeholder="Try mangoes, Boac, Gasan or a seller name">
+            </div>
+
+            <div class="col-md-3">
+              <label class="form-label" for="filter-category">Category</label>
+              <select class="form-select" id="filter-category" name="category">
+                <option value="">All categories</option>
+                ${categories
+                  .map(
+                    (item) => `
+                  <option value="${escapeHtml(item)}"
+                    ${category === item ? "selected" : ""}>
+                    ${escapeHtml(item)}
+                  </option>
+                `
+                  )
+                  .join("")}
+              </select>
+            </div>
+
+            <div class="col-md-2">
+              <button class="btn btn-success w-100" type="submit">
+                Search
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section>
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h5 section-heading mb-0">Available products</h2>
+        <span class="text-muted small">${products.length} listing${
+          products.length === 1 ? "" : "s"
+        }</span>
+      </div>
+
+      ${
+        products.length
+          ? `<div class="product-grid">${products
+              .map((product) => productCard(product, true))
+              .join("")}</div>`
+          : `<div class="empty-state">
+            <h3 class="h5">No products found</h3>
+            <p class="text-muted mb-0">Try a different search or category.</p>
+           </div>`
+      }
+    </section>
+
+    <section class="mt-5">
+      <h2 class="h5 section-heading mb-3">My orders</h2>
+
+      ${
+        myOrders.length
+          ? `<div class="table-responsive card">
+            <table class="table table-hover align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Quantity</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${myOrders
+                  .map(
+                    (order) => `
+                  <tr>
+                    <td>${escapeHtml(order.productName)}</td>
+                    <td>${escapeHtml(order.quantity)} ${escapeHtml(
+                      order.unit
+                    )}</td>
+                    <td>₱${formatPrice(order.total)}</td>
+                    <td><span class="badge text-bg-success">${escapeHtml(
+                      order.status
+                    )}</span></td>
+                  </tr>
+                `
+                  )
+                  .join("")}
+              </tbody>
+            </table>
+          </div>`
+          : `<div class="card"><div class="card-body text-muted">
+            You have not placed any orders yet.
+           </div></div>`
+      }
+    </section>
+  `;
+
+        document
+          .getElementById("search-form")
+          .addEventListener("submit", (event) => {
+            event.preventDefault();
+
+            const form = new FormData(event.currentTarget);
+
+            renderMarketplace(
+              String(form.get("search") || ""),
+              String(form.get("category") || "")
+            );
+          });
+
+        main.querySelectorAll("[data-reserve]").forEach((button) => {
+          button.addEventListener("click", () => {
+            reserveProduct(button.dataset.reserve);
+          });
+        });
+      }
+
+      function reserveProduct(productId) {
+        const buyer = currentUser();
+
+        if (!buyer || buyer.role !== "buyer") {
+          alert("Please log in with a Buyer account to reserve products.");
+          return;
+        }
+
+        const product = data.products.find((item) => item.id === productId);
+
+        if (!product) {
+          alert("This product is no longer available.");
+          renderMarketplace();
+          return;
+        }
+
+        const available = Number(product.quantity);
+
+        if (!Number.isFinite(available) || available <= 0) {
+          alert("Sorry, this product is out of stock.");
+          renderMarketplace();
+          return;
+        }
+
+        const answer = prompt(
+          `Product: ${product.name}\nPrice: ₱${formatPrice(
+            product.price
+          )} per ${product.unit}\nAvailable: ${available} ${
+            product.unit
+          }\n\nEnter the quantity you want to reserve:`
+        );
+
+        if (answer === null) return;
+
+        const quantity = Number(answer);
+
+        if (!Number.isInteger(quantity) || quantity <= 0) {
+          alert(
+            "Please enter a valid whole-number quantity greater than zero."
+          );
+          return;
+        }
+
+        if (quantity > available) {
+          alert(`Only ${available} ${product.unit} are currently available.`);
+          return;
+        }
+
+        const total = quantity * Number(product.price);
+
+        if (!Number.isFinite(total) || total <= 0) {
+          alert("Invalid product price. Please contact the seller.");
+          return;
+        }
+
+        const confirmed = confirm(
+          `Confirm your reservation?\n\nProduct: ${
+            product.name
+          }\nQuantity: ${quantity} ${product.unit}\nPrice: ₱${formatPrice(
+            product.price
+          )}\nTotal: ₱${formatPrice(
+            total
+          )}\n\nThis is a reservation only. No online payment will be collected.`
+        );
+
+        if (!confirmed) return;
+
+        const order = {
+          id: makeId(),
+          buyerId: buyer.id,
+          buyerName: buyer.name,
+          sellerId: product.sellerId,
+          sellerName: product.sellerName,
+          productId: product.id,
+          productName: product.name,
+          quantity,
+          unit: product.unit,
+          price: Number(product.price),
+          total,
+          status: "Reserved",
+          createdAt: new Date().toISOString(),
+        };
+
+        data.orders.push(order);
+        product.quantity = available - quantity;
+
+        try {
+          saveData();
+        } catch (error) {
+          data.orders = data.orders.filter((item) => item.id !== order.id);
+          product.quantity = available;
+          return;
+        }
+
+        alert(
+          `Reservation successful!\n\nProduct: ${
+            product.name
+          }\nQuantity: ${quantity} ${product.unit}\nTotal: ₱${formatPrice(
+            total
+          )}\n\nYour order has been saved.`
+        );
+
+        renderMarketplace();
+      }
+
+      // Start application.
+      renderApp();
+    </script>
+  </body>
+</html>
